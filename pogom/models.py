@@ -4,9 +4,10 @@
 import logging
 import os
 import time
-from peewee import Model, MySQLDatabase, SqliteDatabase, InsertQuery,\
+from peewee import Model, SqliteDatabase, InsertQuery,\
                    IntegerField, CharField, DoubleField, BooleanField,\
                    DateTimeField, OperationalError
+from playhouse.pool import PooledMySQLDatabase
 from playhouse.shortcuts import RetryOperationalError
 from datetime import datetime, timedelta
 from base64 import b64encode
@@ -22,7 +23,7 @@ args = get_args()
 db = None
 
 
-class MyRetryDB(RetryOperationalError, MySQLDatabase):
+class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
     pass
 
 
@@ -36,7 +37,8 @@ def init_database():
             args.db_name,
             user=args.db_user,
             password=args.db_pass,
-            host=args.db_host)
+            host=args.db_host,
+            max_connections=10)
         log.info('Connecting to MySQL database on {}.'.format(args.db_host))
     else:
         db = SqliteDatabase(args.db)
