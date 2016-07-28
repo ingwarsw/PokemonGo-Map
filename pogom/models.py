@@ -6,7 +6,8 @@ import os
 import time
 from peewee import Model, SqliteDatabase, InsertQuery,\
                    IntegerField, CharField, DoubleField, BooleanField,\
-                   DateTimeField, OperationalError
+                   DateTimeField, OperationalError, create_model_tables
+from playhouse.flask_utils import FlaskDB
 from playhouse.pool import PooledMySQLDatabase
 from playhouse.shortcuts import RetryOperationalError
 from datetime import datetime, timedelta
@@ -20,18 +21,14 @@ from .customLog import printPokemon
 log = logging.getLogger(__name__)
 
 args = get_args()
-db = None
+db = FlaskDB()
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
     pass
 
 
-def init_database():
-    global db
-    if db is not None:
-        return db
-
+def init_database(app):
     if args.db_type == 'mysql':
         db = MyRetryDB(
             args.db_name,
@@ -44,12 +41,13 @@ def init_database():
         db = SqliteDatabase(args.db)
         log.info('Connecting to local SQLLite database.')
 
-    return db
+    app.config['DATABASE'] = db
+    db.init_app(app)
+
+    create_model_tables([Pokemon, Pokestop, Gym, ScannedLocation], fail_silently=True)
 
 
-class BaseModel(Model):
-    class Meta:
-        database = init_database()
+class BaseModel(db.Model):
 
     @classmethod
     def get_all(cls):
@@ -354,9 +352,3 @@ def bulk_upsert(cls, data):
             continue
 
         i+=step
-
-
-def create_tables(db):
-    db.connect()
-    db.create_tables([Pokemon, Pokestop, Gym, ScannedLocation], safe=True)
-    db.close()
