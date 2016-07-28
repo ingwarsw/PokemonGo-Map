@@ -21,7 +21,7 @@ from .customLog import printPokemon
 log = logging.getLogger(__name__)
 
 args = get_args()
-db = FlaskDB()
+flaskDb = FlaskDB()
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
@@ -42,12 +42,12 @@ def init_database(app):
         log.info('Connecting to local SQLLite database.')
 
     app.config['DATABASE'] = db
-    db.init_app(app)
+    flaskDb.init_app(app)
 
     create_model_tables([Pokemon, Pokestop, Gym, ScannedLocation], fail_silently=True)
 
 
-class BaseModel(db.Model):
+class BaseModel(flaskDb.Model):
 
     @classmethod
     def get_all(cls):
