@@ -35,7 +35,7 @@ def init_database(app):
             user=args.db_user,
             password=args.db_pass,
             host=args.db_host,
-            max_connections=10)
+            max_connections=args.db_max_connections)
         log.info('Connecting to MySQL database on {}.'.format(args.db_host))
     else:
         db = SqliteDatabase(args.db)
